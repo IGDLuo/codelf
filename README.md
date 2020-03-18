@@ -1,21 +1,25 @@
   <img src="https://user-images.githubusercontent.com/799578/50462941-8075fe80-09c3-11e9-89e7-af0cb7991406.png" width="80">
 
-Codelf(变量命名神器)
+CODELF(变量命名神器)
 =================
-Best GitHub stars, repositories tagger and organizer. Search over projects from Github, Bitbucket, Google Code, Codeplex, Sourceforge, Fedora Project, GitLab to find real-world usage variable names. 
+  A search tool helps dev to solve the naming things problem.
+
+  Search over projects from Github, Bitbucket, Google Code, Codeplex, Sourceforge, Fedora Project, GitLab to find real-world usage variable names.
+  
+  Also a daily Algorithm Copybook.
+  
+  Also a GitHub stars, repositories tagger and organizer tool.
 
   >There are only two hard things in Computer Science: cache invalidation and naming things.-- Phil Karlton
   >
   >![twohardtings](https://user-images.githubusercontent.com/799578/50462942-8075fe80-09c3-11e9-9c7f-b38d495b925d.jpg)
+  
+  ![image](https://user-images.githubusercontent.com/799578/51435509-a2595d00-1cb3-11e9-8f4e-85ecbc3a2325.png)
 
 WIKI
 =================
 [简体中文](https://github.com/unbug/codelf/wiki)
   
-Apps
-=================
-[Codelf Chrome App](https://chrome.google.com/webstore/detail/codelf-best-github-stars/jnmjaglhmmcplekpfnblniiammmdpaan)
-
 Plugins
 =================
 ### Codelf for VS Code
@@ -59,38 +63,11 @@ Plugins
   
   ![ST Command Palette...](https://cloud.githubusercontent.com/assets/799578/12536569/10422964-c2e4-11e5-9530-6efb742dad3c.png)
 
-  
-
-Build
+Apps
 =================
-1. install requirements run ```npm install```
-2. build and watch run ```gulp```
+[Codelf Chrome App](https://chrome.google.com/webstore/detail/codelf-best-github-stars/jnmjaglhmmcplekpfnblniiammmdpaan)
 
-Thanks
-=================
-  * API powered by [searchcode](http://searchcode.com/) & [youdao](http://fanyi.youdao.com/)
-  * UI powered by [Bootstrap v4.0](http://v4-alpha.getbootstrap.com/)
-  * Syntax highlighting of source code powered by [google-code-prettify](https://github.com/google/code-prettify)
-  * [Google Lovefield](https://github.com/google/lovefield)
-  * [ZeroClipboard](https://github.com/zeroclipboard/zeroclipboard)
-  * Utils - [generator-webappstarter](https://github.com/unbug/generator-webappstarter)
-  * [Data Drive Management System](https://github.com/unbug/ddms)
   
-
-Programming naming convention
-=============================
-  * [Google Style Guides](https://github.com/google/styleguide)
-  * [The Ruby Style Guide](https://github.com/bbatsov/ruby-style-guide)
-  * [Style guide & coding conventions for Swift projects](https://github.com/github/swift-style-guide)
-  * CSS Architecture
-    * [OOCSS](http://github.com/stubbornella/oocss/wiki) - Object Oriented CSS
-    * [ACSS](https://www.lucidchart.com/techblog/2014/01/31/atomic-css-tool-set/) - Atomic CSS
-    * [oCSS](http://krasimir.github.io/organic-css/) - organic cascade style sheet
-    * [SMACSS](http://smacss.com/) - Scalable and Modular Architecture for CSS
-    * [BEM](http://bem.info/) [getbem](http://getbem.com/) - Block, Element, Modifier
-    * [evolve CSS](http://www.evolvecss.com/) - A Sass-based CSS architecture style guide 
-    
-
 Find me
 =================
   * Twitter [@unbug](https://twitter.com/unbug)
@@ -102,11 +79,20 @@ Videos
   
 Screenshots
 ================
-![search1](https://cloud.githubusercontent.com/assets/799578/12498414/5a95d06e-c0dd-11e5-8a38-247e294df7ab.png)
 
-![search2](https://cloud.githubusercontent.com/assets/799578/12498417/5aaf5ce6-c0dd-11e5-96be-af3900407d51.png)
+### Search variable
 
-![search3](https://cloud.githubusercontent.com/assets/799578/12498416/5a99eff0-c0dd-11e5-8458-1668d72a27ed.png)
+![image](https://user-images.githubusercontent.com/799578/51435477-f748a380-1cb2-11e9-89df-3ae5d99ed7e6.png)
+
+![image](https://user-images.githubusercontent.com/799578/51435487-1b0be980-1cb3-11e9-9379-58c2ec678a81.png)
+
+### Daily Algorithm Copybook
+
+![jan-20-2019 14-29-06](https://user-images.githubusercontent.com/799578/51436194-75ad4180-1cc3-11e9-9ca0-80a0a56b9d7c.gif)
+
+![image](https://user-images.githubusercontent.com/799578/51435445-71c4f380-1cb2-11e9-87a4-edc54cbe7052.png)
+
+### GitHub stars, repositories tagger and organizer tool
 
 ![bnk1](https://cloud.githubusercontent.com/assets/799578/12507895/9945d290-c133-11e5-8bb9-ff5d5dec0cfe.png)
 

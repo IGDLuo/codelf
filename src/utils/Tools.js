@@ -1,20 +1,3 @@
-let appCache = window.applicationCache;
-appCache.addEventListener('updateready', function () {
-  if (appCache.status == appCache.UPDATEREADY) {
-    try {
-      appCache.update();
-      if (appCache.status == appCache.UPDATEREADY) {
-        try {
-          appCache.swapCache();
-          window.location.reload(false);
-        } catch (err) {
-        }
-      }
-    } catch (err) {
-    }
-  }
-}, false);
-
 const ua = navigator.userAgent;
 const android = ua.match(/(Android);?[\s/]+([\d.]+)?/);
 const ipad = ua.match(/(iPad).*OS\s([\d_]+)/);
@@ -104,4 +87,4 @@ const randomLabelColor = () => {
 import SparkMD5 from 'spark-md5';
 const MD5 = SparkMD5.hash;
 
-export {os, thisPage, thisPath, randomColor, InlineWebWorker, uuid, randomLabelColor, MD5}
+export { os, thisPage, thisPath, randomList, randomColor, InlineWebWorker, uuid, randomLabelColor, MD5 }

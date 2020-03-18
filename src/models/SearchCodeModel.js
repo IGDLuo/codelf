@@ -1,10 +1,12 @@
 import BaseModel from './BaseModel';
 import * as Tools from '../utils/Tools';
 import YoudaoTranslateData from './metadata/YoudaoTranslateData';
+import BaiduTranslateData from './metadata/BaiduTranslateData';
+import BingTranslateData from './metadata/BingTranslateData';
 import JSONP from '../utils/JSONP';
 import Store from './Store';
 import AppModel from './AppModel';
-import {SessionStorage} from '../utils/LocalStorage';
+import { SessionStorage } from '../utils/LocalStorage';
 import * as Configs from '../constants/Configs';
 
 const SEARCH_LANG_KEY = `${Configs.APP_NANE}_search_lang_key`;
@@ -22,14 +24,13 @@ class SearchCodeModel extends BaseModel {
       sourceCode: null
     };
     this._variableRepoMapping = {};
-    this._sourceCodeStore = new Store(Infinity, {
-      persistence: 'session',
-      persistenceKey: AppModel.genPersistenceKey('source_code_key')
-    });
+    this._sourceCodeStore = new Store(Infinity);
     this._variableListStore = new Store(Infinity, {
       persistence: 'session',
       persistenceKey: AppModel.genPersistenceKey('variable_list_key')
     });
+    const translators = [YoudaoTranslateData, YoudaoTranslateData, YoudaoTranslateData, BaiduTranslateData, BingTranslateData];
+    this._translator = translators[new Date().getSeconds() % translators.length];
   }
 
   //search code by query
@@ -47,7 +48,7 @@ class SearchCodeModel extends BaseModel {
     let isZH = this._isZH(val);
     if (isZH) {
       // translate by youdao
-      const translate = await YoudaoTranslateData.request(val);
+      const translate = await this._translator.request(val);
       if (translate) {
         q = translate.translation;
         suggestion = this._parseSuggestion(translate.suggestion, suggestion);
@@ -74,27 +75,34 @@ class SearchCodeModel extends BaseModel {
     const langParams = lang.length ? ('&lan=' + lang.join(',').split(',').join('&lan=')) : '';
     const qParams = q.replace(' ', '+');
     const url = `//searchcode.com/api/jsonp_codesearch_I/?callback=?&q=${qParams}&p=${page}&per_page=42${langParams}`;
-    val && JSONP(url)
-      .then(data => {
-        const cdata = {
-          searchValue: val,
-          page: page,
-          variableList: [...this._data.variableList, this._parseVariableList(data.results, q)],
-          searchLang: lang,
-          suggestion: suggestion,
-          isZH: isZH || this.isZH
-        };
-        this.update(cdata);
-        this._variableListStore.save(cacheId, cdata);
-      }).catch(err => {
-        this.update({
-          searchValue: val,
-          page: page,
-          variableList: [...this.variableList, []],
-          searchLang: lang,
-          suggestion: suggestion,
-          isZH: isZH || this.isZH
-        });
+    const done = data => {
+      const cdata = {
+        searchValue: val,
+        page: page,
+        variableList: [...this._data.variableList, this._parseVariableList(data.results, q)],
+        searchLang: lang,
+        suggestion: suggestion,
+        isZH: isZH || this.isZH
+      };
+      this.update(cdata);
+      this._variableListStore.save(cacheId, cdata);
+    };
+    val && JSONP(url, { callbackName: 'searchcodeRequestVariableCallback' })
+      .then(done).catch(() => {
+        // fallback to fetch
+        fetch(`//searchcode.com/api/codesearch_I/?q=${qParams}&p=${page}&per_page=42${langParams}`)
+          .then(res => res.json())
+          .then(done)
+          .catch(() => {
+            this.update({
+              searchValue: val,
+              page: page,
+              variableList: [...this.variableList, []],
+              searchLang: lang,
+              suggestion: suggestion,
+              isZH: isZH || this.isZH
+            });
+          });
       });
   }
 
@@ -102,14 +110,14 @@ class SearchCodeModel extends BaseModel {
   requestSourceCode(id) {
     const cache = this._sourceCodeStore.get(id);
     if (cache) {
-      this.update({sourceCode: cache});
+      this.update({ sourceCode: cache });
       return;
     }
     id && fetch('https://searchcode.com/api/result/' + id + '/')
       .then(res => res.json())
       .then(data => {
         this._sourceCodeStore.save(id, data.code);
-        this.update({sourceCode: data.code});
+        this.update({ sourceCode: data.code });
       });
   }
 

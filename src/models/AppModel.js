@@ -2,7 +2,7 @@ import BaseModel from './BaseModel';
 import LocalStorage from '../utils/LocalStorage';
 import * as Tools from '../utils/Tools';
 import * as Configs from '../constants/Configs';
-import {searchParams} from '../utils/Param';
+import { searchParams } from '../utils/Param';
 import Navigator from '../utils/Navigator';
 
 const DEVICE_ID_KEY = `${Configs.APP_NANE}_device_id`;
@@ -41,6 +41,14 @@ class AppModel extends BaseModel {
 
   get isGithub() {
     return this._data.isGithub;
+  }
+
+  get appName() {
+    return this._data.appName;
+  }
+
+  get deviceId() {
+    return this._data.deviceId;
   }
 }
 

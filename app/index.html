@@ -11,9 +11,15 @@
   <link rel="apple-touch-icon" sizes="144x144"  href="images/codelf_logo.png">
   <link rel="apple-touch-icon-precomposed" href="images/codelf_logo.png">
   <link title="CODELF" type="application/opensearchdescription+xml" rel="search" href="./opensearch.xml">
+  <script>
+    // auto redirect to HTTPS
+    if (window.location.protocol != "https:"){
+      window.location.protocol = "https";
+    }
+  </script>
   <link type="text/css" rel="stylesheet" href="./css/lib.css">
   <link type="text/css" rel="stylesheet" href="./css/app.css">
-  <script src="js/lib.js"></script>
+  <script src="./js/lib.js"></script>
 </head>
 <body ontouchstart>
 <div class="app"></div>
@@ -114,6 +120,7 @@
         // *Don't* register service worker file in, e.g., a scripts/ sub-directory!
         // See https://github.com/slightlyoff/ServiceWorker/issues/468
         navigator.serviceWorker.register('sw.js').then(function(reg) {
+          setInterval(reg.update, 60 * 60 * 1000); // update the service worker hourly
           // updatefound is fired if service-worker.js changes.
           reg.onupdatefound = function() {
             // The updatefound event implies that reg.installing is set; see

@@ -1,105 +1,178 @@
-import React from 'react';
-import {Container} from 'semantic-ui-react';
+import React, { useEffect, useReducer, useCallback } from 'react';
+import { Container } from 'semantic-ui-react';
 import SearchBar from '../components/SearchBar';
-import Title from '../components/Title';
+import TitleLogo from '../components/TitleLogo';
 import SearchCodeModel from '../models/SearchCodeModel';
 import HashHandler from '../utils/HashHandler';
 import VariableList from '../components/VariableList';
 import SearchError from '../components/SearchError';
 import Loading from '../components/Loading';
 import Donate from '../components/Donate';
-import NoticeLinks from '../components/NoticeLinks';
 import Suggestion from '../components/Suggestion';
-import NavBar from '../components/NavBar';
 import SourceCode from '../components/SourceCode';
 import AppModel from '../models/AppModel';
 import DDMSModel from '../models/DDMSModel';
+import Doodle from '../components/Doodle';
 
-export default class MainContainer extends React.Component {
-  state = {
-    isZH: false,
-    isError: false,
-    requestingVariable: false,
-    searchValue: SearchCodeModel.searchValue,
-    searchLang: SearchCodeModel.searchLang,
-    page: SearchCodeModel.page,
-    variableList: SearchCodeModel.variableList,
-    suggestion: SearchCodeModel.suggestion,
-    requestingSourceCode: false,
-    sourceCodeVisible: false,
-    sourceCodeVariable: null,
-    sourceCodeRepo: null,
+const actionTypes = {
+  UPDATE: 'update',
+};
+
+const initState = {
+  isZH: false,
+  isError: false,
+  variableRequesting: false,
+  searchValue: SearchCodeModel.searchValue,
+  searchLang: SearchCodeModel.searchLang,
+  page: SearchCodeModel.page,
+  variableList: SearchCodeModel.variableList,
+  suggestion: SearchCodeModel.suggestion,
+  luckyKeyWords: DDMSModel.luckyKeyWords,
+  sourceCodeRequesting: false,
+  sourceCodeVisible: false,
+  sourceCodeVariable: null,
+  sourceCodeRepo: null,
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case actionTypes.UPDATE:
+      return {
+        ...state,
+        ...action.payload
+      };
+    default:
+      return state;
   }
+}
 
-  repoList = null;
 
-  constructor(props) {
-    super(props);
-    SearchCodeModel.onUpdated(this.handleSearchCodeModelUpdate);
-    window.addEventListener('hashchange', this.handleLocationHashChanged, false);
+export default function MainContainer(props) {
+  const [state, dispatch] = useReducer(reducer, initState);
+
+  useEffect(() => {
     AppModel.analytics();
+    setTimeout(handleLocationHashChanged, 100);
+    window.addEventListener('hashchange', handleLocationHashChanged, false);
+    return () => window.removeEventListener('hashchange', handleLocationHashChanged);
+  }, []);
+
+  useEffect(() => {
+    state.variableList.length && document.body.classList.add('dark');
+  }, [state.variableList]);
+
+  useEffect(() => {
+    SearchCodeModel.onUpdated(handleSearchCodeModelUpdate);
+    return () => SearchCodeModel.offUpdated(handleSearchCodeModelUpdate);
+  });
+
+  useEffect(() => {
+    function handleDDMSModelUpdate(curr, prev, mutation) {
+      if (mutation.luckyKeyWords) {
+        setState({ luckyKeyWords: curr.luckyKeyWords });
+      }
+    }
+    DDMSModel.onUpdated(handleDDMSModelUpdate);
+    return () => DDMSModel.offUpdated(handleDDMSModelUpdate);
+  }, []);
+
+  const handleSearch = useCallback((val, lang) => {
+    if (val === null || val === undefined || state.variableRequesting) {
+      return;
+    }
+    val = val.trim().replace(/\s+/ig, ' '); // filter spaces
+    if (val.length < 1) {
+      return;
+    }
+    if (val == state.searchValue) {
+      requestVariable(val, lang);
+    } else {
+      setState({ searchLang: lang });
+      setTimeout(() => HashHandler.set(val)); // update window.location.hash
+    }
+  }, [state.searchValue, state.variableRequesting]);
+
+  const handleOpenSourceCode = useCallback((variable) => {
+    setState({ sourceCodeVariable: variable });
+    setTimeout(() => requestSourceCode(variable.repoList[0]), 0);
+  }, []);
+
+  function handleCloseSourceCode() {
+    setState({ sourceCodeVisible: false });
   }
 
-  componentDidUpdate(prevProps) {
-    this.state.variableList.length && document.body.classList.add('dark');
+  function handleRequestSourceCode(repo) {
+    requestSourceCode(repo);
   }
 
-  componentDidMount() {
-    this.handleLocationHashChanged();
+  function renderSloganImage() {
+    if (state.page > 0 || state.variableList.length) {
+      return '';
+    }
+    return <div className='slogan-image'><img src='images/twohardtings.jpg' /></div>;
   }
 
-  checkError(data) {
-    if (this.state.requestingVariable) {
+  function renderDoodle() {
+    if (state.variableList.length == 0) { return null; }
+    return <Doodle text={state.searchValue} />
+  }
+
+  function setState(payload) {
+    dispatch({ type: actionTypes.UPDATE, payload: payload });
+  }
+
+  function checkError(data) {
+    if (state.variableRequesting) {
       // no search result
-      if (data.variableList.length < 1 || data.variableList[data.variableList.length - 1].length < 1)  {
+      if (data.variableList.length < 1 || data.variableList[data.variableList.length - 1].length < 1) {
         return true;
       }
     }
     return false;
   }
 
-  requestVariable = (val, lang) => {
-    const langChanged = lang ? (lang.join(',') != this.state.searchLang.join(',')) : this.state.searchLang != lang;
+  function requestVariable(val, lang) {
+    const langChanged = lang ? (lang.join(',') != state.searchLang.join(',')) : !!state.searchLang;
     val = decodeURIComponent(val);
-    let page = this.state.page;
-    if (val == this.state.searchValue && !langChanged) {
+    let page = state.page;
+    if (val == state.searchValue && !langChanged) {
       page += 1;
     } else {
       page = 0;
     }
-    this.setState({searchValue: val, requestingVariable: true});
-    SearchCodeModel.requestVariable(val, page,  lang);
+    setState({ searchValue: val, variableRequesting: true });
+    SearchCodeModel.requestVariable(val, page, lang || state.searchLang);
     AppModel.analytics('q=' + val);
     DDMSModel.postKeyWords(val);
-    this.updateDocTitle(val);
+    updateDocTitle(val);
   }
 
-  requestSourceCode = repo => {
-    this.setState({
+  function requestSourceCode(repo) {
+    setState({
       sourceCodeVisible: true,
-      requestingSourceCode: true,
+      sourceCodeRequesting: true,
       sourceCodeRepo: repo
     });
     SearchCodeModel.requestSourceCode(repo.id);
-    AppModel.analytics('vc&q=' + this.state.sourceCodeVariable.keyword);
+    AppModel.analytics('sourcecode&q=' + state.sourceCodeVariable.keyword);
   }
 
-  updateDocTitle = title => {
-    document.title = `${title? (title + ' - ') : ''}CODELF`;
+  function updateDocTitle(title) {
+    document.title = `${title ? (title + ' - ') : ''}CODELF`;
   }
 
-  handleLocationHashChanged = e => {
+  function handleLocationHashChanged(e) {
     e && e.preventDefault();
     const hash = HashHandler.get();
-    hash && this.requestVariable(hash.replace(/(\?.*)/, ''));
+    hash && requestVariable(hash.replace(/(\?.*)/, ''));
   }
 
-  handleSearchCodeModelUpdate = (curr, prev, mutation) => {
+  function handleSearchCodeModelUpdate(curr, prev, mutation) {
     if (mutation.variableList) {
-      this.setState({
-        isZH: SearchCodeModel.isZH || this.state.isZH,
-        isError: this.checkError(curr),
-        requestingVariable: !mutation.variableList,
+      setState({
+        isZH: SearchCodeModel.isZH || state.isZH,
+        isError: checkError(curr),
+        variableRequesting: !mutation.variableList,
         searchValue: SearchCodeModel.searchValue,
         searchLang: SearchCodeModel.searchLang,
         page: SearchCodeModel.page,
@@ -108,59 +181,26 @@ export default class MainContainer extends React.Component {
       });
     }
     if (mutation.sourceCode) {
-      this.setState({
-        requestingSourceCode: false,
+      setState({
+        sourceCodeRequesting: false,
         sourceCode: SearchCodeModel.sourceCode
       });
     }
   }
 
-  handleSearch = (val, lang) => {
-    if (val === null || val === undefined || this.state.requestingVariable) { return; }
-    val = val.trim().replace(/\s+/ig, ' '); // filter spaces
-    if (val.length < 1) { return; }
-    if (val == this.state.searchValue) {
-      this.requestVariable(val, lang);
-    } else  {
-      this.setState({searchLang: lang});
-      HashHandler.set(val); // update window.location.hash
-    }
-  }
-
-  handleOpenSourceCode = variable => {
-    this.setState({sourceCodeVariable: variable});
-    setTimeout(() => this.requestSourceCode(variable.repoList[0]), 0);
-  }
-
-  handleCloseSourceCode = () => {
-    this.setState({sourceCodeVisible: false});
-  }
-
-  handleRequestSourceCode = repo => {
-    this.requestSourceCode(repo);
-  }
-
-  renderSloganImage() {
-    if (this.state.page > 0 || this.state.variableList.length) { return ''; }
-    return <div className='slogan-image'><img src='images/twohardtings.jpg'/></div>;
-  }
-
-  render() {
-    return (
-      <Container className='main'>
-        <Title {...this.state}/>
-        <SearchBar placeholder='AI 人工智能' {...this.state} onSearch={this.handleSearch}/>
-        <Suggestion {...this.state}/>
-        {this.state.requestingVariable ? <Loading/> : (this.state.isError ? <SearchError/> : '')}
-        {this.renderSloganImage()}
-        <VariableList {...this.state} onOpenSourceCode={this.handleOpenSourceCode}/>
-        {this.state.variableList.length ? <Donate {...this.state}/> : ''}
-        <NoticeLinks/>
-        <NavBar/>
-        <SourceCode {...this.state}
-                    onRequestSourceCode={this.handleRequestSourceCode}
-                    onCloseSourceCode={this.handleCloseSourceCode}/>
-      </Container>
-    )
-  }
+  return (
+    <Container className='main-container'>
+      <TitleLogo />
+      <SearchBar placeholder='AI 人工智能' {...state} onSearch={handleSearch} />
+      <Suggestion {...state} />
+      {state.variableRequesting ? <Loading /> : (state.isError ? <SearchError /> : '')}
+      {renderSloganImage()}
+      <VariableList {...state} onOpenSourceCode={handleOpenSourceCode} />
+      {state.variableList.length ? <Donate {...state} /> : ''}
+      <SourceCode {...state}
+        onRequestSourceCode={handleRequestSourceCode}
+        onCloseSourceCode={handleCloseSourceCode} />
+      {renderDoodle()}
+    </Container>
+  )
 }
